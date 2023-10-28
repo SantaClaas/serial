@@ -1,0 +1,10 @@
+{
+  "name": "serial-server",
+  "scripts": {
+    "tailwind": "tailwindcss -i ./input.css -o ./style/output.css --watch",
+    "dev": "cargo leptos watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.5"
+  }
+}
