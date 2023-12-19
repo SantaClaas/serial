@@ -295,7 +295,7 @@ pub async fn set_fan_speed(speed: f32) -> Result<Result<(), SetFanSpeedError>, S
 pub async fn create_device(device: Device) -> Result<Result<Vec<Device>, CreateDeviceError>, ServerFnError> {
     dbg!(&device);
 
-    Ok(crate::core::create_device(device))
+    Ok(crate::core::create_device(device).await)
 
     // Ok(Ok(()))
 }

@@ -1,4 +1,3 @@
-
 use axum::body::Body;
 use axum::extract::{FromRef, Path, RawQuery, State};
 use axum::response::{IntoResponse, Response};
@@ -8,10 +7,11 @@ use leptos::logging::log;
 use leptos::{provide_context, LeptosOptions};
 use leptos_axum::{handle_server_fns_with_context, LeptosRoutes};
 use serial_server::app::App;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[cfg(feature = "ssr")]
 use serial_server::state::{AppState, OurState};
-
 
 /// This is required for serverside state
 #[cfg(feature = "ssr")]
@@ -75,7 +75,7 @@ async fn main() {
     let routes = generate_route_list(App);
 
     let app_state = AppState {
-        our_state: OurState::default(),
+        our_state: Arc::new(Mutex::new(OurState::default())),
         options: leptos_options,
         routes: routes.clone(),
     };
