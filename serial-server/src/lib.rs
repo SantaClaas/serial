@@ -4,6 +4,8 @@ pub mod error_template;
 pub mod fileserv;
 pub mod state;
 pub mod core;
+mod fan_speed;
+mod devices;
 
 cfg_if! { if #[cfg(feature = "hydrate")] {
     use leptos::*;

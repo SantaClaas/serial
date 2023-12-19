@@ -1,7 +1,6 @@
-use crate::core::{CreateDeviceError, Device, DEVICE_ADDRESS_RANGE};
+use crate::core::Device;
 use crate::error_template::{AppError, ErrorTemplate};
 use crc::{Crc, CRC_16_MODBUS};
-use leptos::leptos_dom::logging::console_log;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -10,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use serialport::SerialPortInfo;
 use std::fmt::Display;
 use std::io::{Read, Write};
+
+use crate::devices::DeviceList;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -275,90 +276,6 @@ pub async fn test_port(port_name: String) -> Result<(), ServerFnError> {
     Ok(())
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub enum SetFanSpeedError {
-    /// The value was either larger than 1 or smaller than 0
-    SpeedOutOfRange,
-}
-#[server(SetFanSpeed)]
-pub async fn set_fan_speed(speed: f32) -> Result<Result<(), SetFanSpeedError>, ServerFnError> {
-    if 0. > speed || speed > 1. {
-        // This feels weird
-        return Ok(Err(SetFanSpeedError::SpeedOutOfRange));
-    }
-
-    dbg!(speed);
-
-    Ok(Ok(()))
-}
-#[server(CreateDevice)]
-pub async fn create_device(device: Device) -> Result<Result<Vec<Device>, CreateDeviceError>, ServerFnError> {
-    dbg!(&device);
-
-    Ok(crate::core::create_device(device).await)
-
-    // Ok(Ok(()))
-}
-
-#[component]
-fn DeviceList(devices: ReadSignal<Vec<Device>>, set_devices: WriteSignal<Vec<Device>>) -> impl IntoView {
-    // let (devices, set_devices) = create_signal::<Vec<Device>>(Vec::default());
-
-    // A note on state syncing:
-    // As this project is limited in scope, we keep the state management simple and don't try to
-    // keep the device list on each client in sync with the server.
-    // We assume that only one client makes changes to the device list at a time and rely on user
-    // communication of the change.
-    // However we should handle errors due to out of sync clients gracefully.
-    let create_device = Action::<CreateDevice, _>::server();
-    create_effect(move |_| {
-        let value = create_device.value().get();
-
-        if let Some(Ok(Ok(devices))) = value {
-            set_devices.set(devices);
-        }
-    });
-
-    view! {
-        <hgroup>
-            <h2>Devices</h2>
-            <p>Add devices to assign them to their serial port</p>
-        </hgroup>
-
-        <ActionForm action=create_device>
-            <fieldset>
-                <legend>New Device</legend>
-                <label for="address">Address</label>
-                <input
-                  id="address"
-                  type="number"
-                  name="device[address]"
-                  inputmode="numeric"
-                  min=DEVICE_ADDRESS_RANGE.start
-                  // HTML max is inclusive the range is exclusive
-                  max=DEVICE_ADDRESS_RANGE.end - 1
-                  step="1"
-                />
-
-                <label for="type">Type</label>
-                <select id="type" name="device[type]">
-                    <option value="Fan">Fan</option>
-                    <option value="TemperatureSensor">Temperature Sensor</option>
-                </select>
-            </fieldset>
-
-            <button type="submit">Add</button>
-        </ActionForm>
-        // iterate over the rows and display each value
-        <For
-            each=devices
-            key=|device| device.address.clone()
-            let:device
-        >
-            <p>{device.address}</p>
-        </For>
-    }
-}
 
 /// Renders the home page of your application.
 #[component]
@@ -376,20 +293,6 @@ fn HomePage() -> impl IntoView {
         ports.refetch();
     };
 
-    let fan_speed_change = |event| {
-        let value = event_target_value(&event);
-        // console_log(&*format!("{}", value));
-
-        let value = value.parse::<f32>();
-
-        console_log(&*format!("{:?}", value));
-
-        if let Ok(value) = value {
-            spawn_local(async move {
-                let _ = set_fan_speed(value).await;
-            })
-        }
-    };
 
     let (devices, set_devices) = create_signal::<Vec<Device>>(Vec::default());
 
@@ -441,9 +344,6 @@ fn HomePage() -> impl IntoView {
             }}
 
         </Suspense>
-
-        <input id="fan_speed" type="range" min="0" max="1" step="0.1" on:input=fan_speed_change/>
-        <label for="fan_speed">Fan</label>
 
 
         <DeviceList devices set_devices />

@@ -56,7 +56,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
 
         lock.devices.push(device);
 
-
+        // Assume we don't have a lot of devices
         let new_devices = lock.devices.clone();
         Ok(new_devices)
     }
