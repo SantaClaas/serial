@@ -26,6 +26,7 @@ tracing = { version = "0.1.37", optional = true }
 http = "0.2.8"
 serialport = { version = "4.2.2", features = ["serde"] }
 serde = "1.0.190"
+crc = { version = "3.0.1", features = [] }
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
